@@ -1,0 +1,6 @@
+*.pyc
+build
+dist
+coolast.egg-info
+.DS_Store
+parsetab.py
