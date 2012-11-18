@@ -34,13 +34,13 @@ def test_check_all_functions():
 
   st.add('c', foo)
 
-  # with st.in_scope():
-  #   assert st.find('c') == foo
-  #   assert st.find('b') == bar
-  #   assert not st.check_scope('c')
-  #   assert not st.check_scope('b')
-  #   st.add('b', foo)
-  #   assert st.find('b') == foo
+  with st.in_scope() as st:
+    assert st.find('c') == foo
+    assert st.find('b') == bar
+    assert not st.check_scope('c')
+    assert not st.check_scope('b')
+    st.add('b', foo)
+    assert st.find('b') == foo
 
   eq_(st.find('b'), bar)
 
