@@ -10,7 +10,7 @@ setuptools.setup(
   url = 'http://github.com/mschein/coolast',
   platforms = 'any',
 
-  py_modules = ['symboltable', 'astparse'],
+  py_modules = ['symboltable', 'astparse', 'ast'],
 
   zip_safe = True,
   verbose = False,

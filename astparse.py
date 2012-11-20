@@ -306,3 +306,15 @@ def build_ast_parser(action_dict):
     print "Syntax error in input!: %s" % p
 
   return yacc.yacc()
+
+
+# XXX Maybe move me to ast.py?
+def parse_cool_ast(ast_text, action_dict):
+  """Simple interface for parsing the Cool AST.
+
+  Pass in a dictionary of actions for each parse rule,
+  it will perform them.
+
+  """
+  parser = build_ast_parser(action_dict)
+  return parser.parse(ast_text, lexer=build_ast_lexer())

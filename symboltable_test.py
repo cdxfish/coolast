@@ -1,4 +1,4 @@
-from nose.tools import eq_, assert_raises
+from nose.tools import eq_
 
 from symboltable import SymbolTable
 
