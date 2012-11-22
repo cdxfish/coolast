@@ -85,17 +85,16 @@ def make_list_node(label):
                               expr_type=None,
                               parse_label=r)
 
-
 tuple_action_dict = {
   'program': make_ast_node({'_program': ['program', 'class_list']}),
   'class_list': make_list_node('classes'),
   'class': make_ast_node({'_class': {'name': 3,
-                                    'parent': 4,
-                                    'filename': 5,
-                                    'features': 7}}),
+                                     'parent': 4,
+                                     'filename': 5,
+                                     'features': 7}}),
   'simple_case': make_ast_node({'_branch': {'name': 3,
-                                           'type_decl': 4,
-                                           'expr': 5}}),
+                                            'type_decl': 4,
+                                            'expr': 5}}),
   'case_list': make_list_node('cases'),
   'expr_list': make_list_node('exprs'),
   'actuals': make_list_node('exprs'),
