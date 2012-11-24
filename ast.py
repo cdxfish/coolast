@@ -62,25 +62,25 @@ simple_action_dict = {
 #
 
 
-ASTNode = namedtuple("ASTNode", "type children lineno expr_type parse_label")
+ASTNode = namedtuple("ASTNode", "type elms lineno expr_type parse_label")
 
-def make_ast_node(children_spec, label=None):
+def make_ast_node(elms_spec, label=None):
   def copy_child_spec(p):
-    spec = children_spec[p[2]]
+    spec = elms_spec[p[2]]
     if type(spec) == dict:
       return dict([key, p[index]] for key, index in spec.iteritems())
     else:
       return dict(zip(spec, p[3:]))
 
   return lambda r, p: ASTNode(type=p[2].lower()[1:],
-                              children=copy_child_spec(p),
+                              elms=copy_child_spec(p),
                               lineno=p[1],
                               expr_type=None,
                               parse_label=r)
 
 # def make_list_node(label):
 #   return lambda r, p: ASTNode(type=label,
-#                               children=p[1:],
+#                               elms=p[1:],
 #                               lineno=None,
 #                               expr_type=None,
 #                               parse_label=r)
@@ -134,7 +134,7 @@ tuple_action_dict = {
   'feature': make_ast_node({'_attr': ['name', 'type_decl', 'init'],
                             '_method': ['name', 'formals', 'return_type', 'expr']}),
   'feature_list': make_list_node('features'),
-  'optional_feature_list': make_list_node('features'),
+  'optional_feature_list': lambda r, p: p[1]
 }
 
 
@@ -194,10 +194,10 @@ def py_ast_to_cool_ast(ast):
 #
 #
 class AstNode(object):
-  def __init__(self, name, children):
+  def __init__(self, name, elms):
     pass
 
-  def children(self):
+  def elms(self):
     pass
 
   def recurse(self):
