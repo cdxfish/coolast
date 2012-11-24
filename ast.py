@@ -131,8 +131,8 @@ tuple_action_dict = {
   'formal': make_ast_node({'name': 3, 'type_decl': 4}),
   'formal_list': make_list_node('formals'),
   'formals': make_list_node('formals'),
-  'feature': make_ast_node({'ATTR': ['name', 'type_decl', 'init'],
-                            'METHOD': ['name', 'formals', 'return_type', 'expr']}),
+  'feature': make_ast_node({'_attr': ['name', 'type_decl', 'init'],
+                            '_method': ['name', 'formals', 'return_type', 'expr']}),
   'feature_list': make_list_node('features'),
   'optional_feature_list': make_list_node('features'),
 }
