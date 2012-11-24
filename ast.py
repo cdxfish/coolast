@@ -78,15 +78,18 @@ def make_ast_node(children_spec, label=None):
                               expr_type=None,
                               parse_label=r)
 
+# def make_list_node(label):
+#   return lambda r, p: ASTNode(type=label,
+#                               children=p[1:],
+#                               lineno=None,
+#                               expr_type=None,
+#                               parse_label=r)
 def make_list_node(label):
-  return lambda r, p: ASTNode(type=label,
-                              children=p[1:],
-                              lineno=None,
-                              expr_type=None,
-                              parse_label=r)
+  return lambda r, p: p[1:]
+
 
 tuple_action_dict = {
-  'program': make_ast_node({'_program': ['program', 'class_list']}),
+  'program': make_ast_node({'_program': ['class_list']}),
   'class_list': make_list_node('classes'),
   'class': make_ast_node({'_class': {'name': 3,
                                      'parent': 4,
@@ -102,7 +105,7 @@ tuple_action_dict = {
       '_no_expr': [],
       '_object': ['ID'],
       '_bool': ['INT_CONST'],
-      '_str': ['STR_CONST'],
+      '_string': ['STR_CONST'],
       '_int': ['INT_CONST'],
       '_comp': ['expr'],
       '_leq': ['expr', 'expr'],
@@ -123,7 +126,7 @@ tuple_action_dict = {
       '_dispatch': ['expr', 'ID', 'actuals'],
       '_static_dispatch': ['expr', 'ID', 'ID', 'actuals'],
       '_assign': ['ID', 'expr']
-      }),
+  }),
   'expr': lambda r,p: None,
   'formal': make_ast_node({'name': 3, 'type_decl': 4}),
   'formal_list': make_list_node('formals'),
@@ -133,6 +136,26 @@ tuple_action_dict = {
   'feature_list': make_list_node('features'),
   'optional_feature_list': make_list_node('features'),
 }
+
+
+def print_node(node, indent):
+  if node[0] == 'expr':
+    pad = ' ' * indent
+    return '%s%s%s %s\n' % (print_node(node[1], indent + 1), pad, node[2], node[3])
+  else:
+    first = True
+    out = ''
+    for elm in node[1:]:
+      if first and type(elm) is int:
+        elm = '#%d' % elm
+
+      if type(elm) in [list, tuple]:
+        out += print_node(elm, indent + 1)
+      else:
+        out += '%s%s\n' % (' ' * indent, elm)
+      first = False
+    return out
+
 
 
 ######################################################################
