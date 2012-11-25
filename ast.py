@@ -10,6 +10,9 @@ from collections import namedtuple
 from pprint import pprint
 
 import astparse
+import types
+
+from brownie.datastructures import OrderedDict
 
 
 ######################################################################
@@ -62,98 +65,128 @@ simple_action_dict = {
 #
 
 
-ASTNode = namedtuple("ASTNode", "type elms lineno expr_type parse_label")
+#ASTNode = namedtuple("ASTNode", "type elms lineno expr_type parse_label")
+class ASTNode(object):
+  def __init__(self, rule, rule_vals, rule_labels, type_index):
+    self.rule = rule
+    self.rule_vals = {}
 
-def make_ast_node(elms_spec, label=None):
-  def copy_child_spec(p):
-    spec = elms_spec[p[2]]
-    if type(spec) == dict:
-      return dict([key, p[index]] for key, index in spec.iteritems())
+    if type_index is not None:
+      self.type = rule_vals[type_index]
+      active_labels = rule_labels[self.type]
     else:
-      return dict(zip(spec, p[3:]))
+      self.type = self.rule
+      active_labels = rule_labels
 
-  return lambda r, p: ASTNode(type=p[2].lower()[1:],
-                              elms=copy_child_spec(p),
-                              lineno=p[1],
-                              expr_type=None,
-                              parse_label=r)
+    self.rule_vals = OrderedDict(zip((label.lower() for label in active_labels),
+                                     rule_vals))
 
-# def make_list_node(label):
-#   return lambda r, p: ASTNode(type=label,
-#                               elms=p[1:],
-#                               lineno=None,
-#                               expr_type=None,
-#                               parse_label=r)
-def make_list_node(label):
+  @property
+  def values(self):
+    return self.rule_vals.values()
+
+  @property
+  def items(self):
+    return self.rule_vals.items()
+
+  def __getattr__(self, attr):
+    if attr in self.__dict__:
+      return self.__dict__[attr]
+
+    if attr not in self.rule_vals:
+      raise AttributeError('Unable to find %s' % attr)
+
+    return self.rule_vals[attr]
+
+  def set_rule_val(self, name, val):
+    self.rule_vals[name] = val
+
+
+def make_ast_node(elms_spec, type_index=1):
+  return lambda r, p: ASTNode(r, p[1:], elms_spec, type_index=type_index)
+
+
+def make_list_node():
   return lambda r, p: p[1:]
 
 
 tuple_action_dict = {
-  'program': make_ast_node({'_program': ['class_list']}),
-  'class_list': make_list_node('classes'),
-  'class': make_ast_node({'_class': {'name': 3,
-                                     'parent': 4,
-                                     'filename': 5,
-                                     'features': 7}}),
-  'simple_case': make_ast_node({'_branch': {'name': 3,
-                                            'type_decl': 4,
-                                            'expr': 5}}),
-  'case_list': make_list_node('cases'),
-  'expr_list': make_list_node('exprs'),
-  'actuals': make_list_node('exprs'),
+  'program': make_ast_node({'_program': ['LINENO', 'PROGRAM', 'class_list']}),
+  'class_list': make_list_node(),
+  'class': make_ast_node({'_class': ['LINENO', 'CLASS', 'name', 'parent', 'filename', 'LPAREN', 'features', 'RPAREN']}),
+  'simple_case': make_ast_node({'_branch': ['LINENO', 'BRANCH', 'name', 'type_decl', 'expr']}),
+  'case_list': make_list_node(),
+  'expr_list': make_list_node(),
+  'actuals': make_list_node(),
   'expr_aux': make_ast_node({
-      '_no_expr': [],
-      '_object': ['ID'],
-      '_bool': ['INT_CONST'],
-      '_string': ['STR_CONST'],
-      '_int': ['INT_CONST'],
-      '_comp': ['expr'],
-      '_leq': ['expr', 'expr'],
-      '_eq': ['expr', 'expr'],
-      '_lt': ['expr', 'expr'],
-      '_neg': ['expr'],
-      '_divide': ['expr', 'expr'],
-      '_mul': ['expr', 'expr'],
-      '_sub': ['expr', 'expr'],
-      '_plus': ['expr', 'expr'],
-      '_isvoid': ['expr'],
-      '_new': ['ID'],
-      '_typcase': ['expr', 'case_list'],
-      '_let': ['ID', 'ID', 'expr', 'expr'],
-      '_block': ['expr_list'],
-      '_loop': ['expr', 'expr'],
-      '_cond': ['expr', 'expr', 'expr'],
-      '_dispatch': ['expr', 'ID', 'actuals'],
-      '_static_dispatch': ['expr', 'ID', 'ID', 'actuals'],
-      '_assign': ['ID', 'expr']
+      '_no_expr': ['LINENO', 'NO_EXPR'],
+      '_object': ['LINENO', 'OBJECT', 'ID'],
+      '_bool': ['LINENO', 'BOOL', 'INT_CONST'],
+      '_string': ['LINENO', 'STRING', 'STR_CONST'],
+      '_int': ['LINENO', 'INT', 'INT_CONST'],
+      '_comp': ['LINENO', 'COMP', 'expr'],
+      '_leq': ['LINENO', 'LEQ', 'expr1', 'expr2'],
+      '_eq': ['LINENO', 'EQ', 'expr1', 'expr2'],
+      '_lt': ['LINENO', 'LT', 'expr1', 'expr2'],
+      '_neg': ['LINENO', 'NEG', 'expr'],
+      '_divide': ['LINENO', 'DIVIDE', 'expr1', 'expr2'],
+      '_mul': ['LINENO', 'MUL', 'expr1', 'expr2'],
+      '_sub': ['LINENO', 'SUB', 'expr1', 'expr2'],
+      '_plus': ['LINENO', 'PLUS', 'expr1', 'expr2'],
+      '_isvoid': ['LINENO', 'ISVOID', 'expr'],
+      '_new': ['LINENO', 'NEW', 'ID'],
+      '_typcase': ['LINENO', 'TYPCASE', 'expr', 'case_list'],
+      '_let': ['LINENO', 'LET', 'ID1', 'ID2', 'expr1', 'expr2'],
+      '_block': ['LINENO', 'BLOCK', 'expr_list'],
+      '_loop': ['LINENO', 'LOOP', 'expr1', 'expr2'],
+      '_cond': ['LINENO', 'COND', 'expr1', 'expr2', 'expr3'],
+      '_dispatch': ['LINENO', 'DISPATCH', 'expr', 'ID', 'actuals'],
+      '_static_dispatch': ['LINENO', 'STATIC', 'expr', 'ID1', 'ID2', 'actuals'],
+      '_assign': ['LINENO', 'ASSIGN', 'ID', 'expr']
   }),
-  'expr': make_ast_node(['expr_aux', ':', 'type']),
-  'formal': make_ast_node({'name': 3, 'type_decl': 4}),
-  'formal_list': make_list_node('formals'),
-  'formals': make_list_node('formals'),
-  'feature': make_ast_node({'_attr': ['name', 'type_decl', 'init'],
-                            '_method': ['name', 'formals', 'return_type', 'expr']}),
-  'feature_list': make_list_node('features'),
+  'expr': make_ast_node(['expr_aux', 'COLON', 'type'], type_index=None),
+  'formal': make_ast_node(['LINENO', 'FORMAL', 'ID1', 'ID2']),
+  'formal_list': make_list_node(),
+  'formals': make_list_node(),
+  'feature': make_ast_node({'_attr': ['LINENO', 'ATTR', 'name', 'type_decl', 'init'],
+                            '_method': ['LINENO', 'METHOD', 'name', 'formals', 'return_type', 'expr']}),
+  'feature_list': make_list_node(),
   'optional_feature_list': lambda r, p: p[1]
 }
 
 
-def print_ast(ast_node, indent):
-  if ast_node.type == 'expr':
-    pad = ' ' * indent
-    return '%s%s%s %s\n' % (print_ast(node[1], indent + 1), pad, node[2], node[3])
-  else:
-    first = True
-    out = ''
-    for elm in ast_node.elms:
-      if first and type(elm) is int:
-        elm = '#%d' % elm
+def ast_to_str(ast_node, indent=0):
+  def recurse(e):
+    return ast_to_str(e, indent + 1)
 
-      if type(elm) in [list, tuple]:
-        out += print_ast(elm, indent + 1)
-      else:
-        out += '%s%s\n' % (' ' * indent, elm)
-      first = False
+  if type(ast_node) in [list, tuple]:
+    return ''.join(recurse(node) for node in ast_node)
+  elif not ast_node or type(ast_node) != ASTNode:
+    return ''
+  else:
+    if ast_node.type == 'expr':
+      pad = ' ' * indent
+      values = ast_node.values
+      return '%s%s%s %s\n' % (recurse(values[0]), pad, values[1], values[2])
+    else:
+      def output_indent(elm):
+        return '%s%s\n' % (' ' * indent, elm)
+
+      out = ''
+      # Clean this up.
+      values = ast_node.values
+      if ast_node.lineno:
+        out += output_indent('#%d' % ast_node.lineno)
+        values = values[1:]
+
+      for elm in values:
+        if type(elm) == ASTNode:
+          out += recurse(elm)
+        elif type(elm) in [list, tuple]:
+          out += ''.join(recurse(e) for e in elm)
+        else:
+          out += output_indent(elm)
+
     return out
 
 
