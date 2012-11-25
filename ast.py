@@ -160,7 +160,7 @@ tuple_action_dict = {
       '_assign': ['LINENO', 'ASSIGN', 'ID', 'expr']
   }),
   'expr': make_ast_node(['expr_aux', 'COLON', 'type'], type_index=None),
-  'formal': make_ast_node(['LINENO', 'FORMAL', 'ID1', 'ID2']),
+  'formal': make_ast_node({'_formal': ['LINENO', 'FORMAL', 'ID1', 'ID2']}),
   'formal_list': handle_list,
   'formals': make_list_node(),
   'feature': make_ast_node({'_attr': ['LINENO', 'ATTR', 'name', 'type_decl', 'init'],
