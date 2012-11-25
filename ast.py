@@ -166,7 +166,7 @@ tuple_action_dict = {
   'feature': make_ast_node({'_attr': ['LINENO', 'ATTR', 'name', 'type_decl', 'init'],
                             '_method': ['LINENO', 'METHOD', 'name', 'formals', 'return_type', 'expr']}),
   'feature_list': handle_list,
-  'optional_feature_list': lambda r, p: p[1]
+  'optional_feature_list': lambda r, p: p[1] if len(p) == 2 else []
 }
 
 
