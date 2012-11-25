@@ -127,7 +127,7 @@ def handle_paren_list(r, p):
 
 tuple_action_dict = {
   'program': make_ast_node({'_program': ['LINENO', 'PROGRAM', 'class_list']}),
-  'class_list': make_list_node(),
+  'class_list': handle_list,
   'class': make_ast_node({'_class': ['LINENO', 'CLASS', 'name', 'parent', 'filename', 'LPAREN', 'features', 'RPAREN']}),
   'simple_case': make_ast_node({'_branch': ['LINENO', 'BRANCH', 'name', 'type_decl', 'expr']}),
   'case_list': handle_list,
