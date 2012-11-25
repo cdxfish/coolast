@@ -127,7 +127,7 @@ tuple_action_dict = {
       '_static_dispatch': ['expr', 'ID', 'ID', 'actuals'],
       '_assign': ['ID', 'expr']
   }),
-  'expr': lambda r,p: None,
+  'expr': make_ast_node(['expr_aux', ':', 'type']),
   'formal': make_ast_node({'name': 3, 'type_decl': 4}),
   'formal_list': make_list_node('formals'),
   'formals': make_list_node('formals'),
@@ -138,19 +138,19 @@ tuple_action_dict = {
 }
 
 
-def print_node(node, indent):
-  if node[0] == 'expr':
+def print_ast(ast_node, indent):
+  if ast_node.type == 'expr':
     pad = ' ' * indent
-    return '%s%s%s %s\n' % (print_node(node[1], indent + 1), pad, node[2], node[3])
+    return '%s%s%s %s\n' % (print_ast(node[1], indent + 1), pad, node[2], node[3])
   else:
     first = True
     out = ''
-    for elm in node[1:]:
+    for elm in ast_node.elms:
       if first and type(elm) is int:
         elm = '#%d' % elm
 
       if type(elm) in [list, tuple]:
-        out += print_node(elm, indent + 1)
+        out += print_ast(elm, indent + 1)
       else:
         out += '%s%s\n' % (' ' * indent, elm)
       first = False

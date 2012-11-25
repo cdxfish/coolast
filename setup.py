@@ -9,9 +9,8 @@ setuptools.setup(
   author_email = 'mike@cronus.ws',
   url = 'http://github.com/mschein/coolast',
   platforms = 'any',
-
+  install_requires = ['brownie', 'ply'],
   py_modules = ['symboltable', 'astparse', 'ast'],
-
   zip_safe = True,
   verbose = False,
 )
