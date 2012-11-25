@@ -69,6 +69,7 @@ simple_action_dict = {
 class ASTNode(object):
   def __init__(self, rule, rule_vals, rule_labels, type_index):
     self.rule = rule
+    # XXX Is this a good name?
     self.rule_vals = {}
 
     if type_index is not None:
@@ -98,7 +99,7 @@ class ASTNode(object):
 
     return self.rule_vals[attr]
 
-  def set_rule_val(self, name, val):
+  def set_val(self, name, val):
     self.rule_vals[name] = val
 
 
@@ -110,14 +111,28 @@ def make_list_node():
   return lambda r, p: p[1:]
 
 
+def handle_list(r, p):
+  if len(p) == 3:
+    return p[1] + [p[2]]
+  else:
+    return [p[1]]
+
+
+def handle_paren_list(r, p):
+  if len(p) == 4:
+    return p[2]
+  else:
+    return []
+
+
 tuple_action_dict = {
   'program': make_ast_node({'_program': ['LINENO', 'PROGRAM', 'class_list']}),
   'class_list': make_list_node(),
   'class': make_ast_node({'_class': ['LINENO', 'CLASS', 'name', 'parent', 'filename', 'LPAREN', 'features', 'RPAREN']}),
   'simple_case': make_ast_node({'_branch': ['LINENO', 'BRANCH', 'name', 'type_decl', 'expr']}),
-  'case_list': make_list_node(),
-  'expr_list': make_list_node(),
-  'actuals': make_list_node(),
+  'case_list': handle_list,
+  'expr_list': handle_list,
+  'actuals': handle_paren_list,
   'expr_aux': make_ast_node({
       '_no_expr': ['LINENO', 'NO_EXPR'],
       '_object': ['LINENO', 'OBJECT', 'ID'],
@@ -140,17 +155,17 @@ tuple_action_dict = {
       '_block': ['LINENO', 'BLOCK', 'expr_list'],
       '_loop': ['LINENO', 'LOOP', 'expr1', 'expr2'],
       '_cond': ['LINENO', 'COND', 'expr1', 'expr2', 'expr3'],
-      '_dispatch': ['LINENO', 'DISPATCH', 'expr', 'ID', 'actuals'],
+      '_dispatch': ['LINENO', 'DISPATCH', 'expr', 'func_name', 'actuals'],
       '_static_dispatch': ['LINENO', 'STATIC', 'expr', 'ID1', 'ID2', 'actuals'],
       '_assign': ['LINENO', 'ASSIGN', 'ID', 'expr']
   }),
   'expr': make_ast_node(['expr_aux', 'COLON', 'type'], type_index=None),
   'formal': make_ast_node(['LINENO', 'FORMAL', 'ID1', 'ID2']),
-  'formal_list': make_list_node(),
+  'formal_list': handle_list,
   'formals': make_list_node(),
   'feature': make_ast_node({'_attr': ['LINENO', 'ATTR', 'name', 'type_decl', 'init'],
                             '_method': ['LINENO', 'METHOD', 'name', 'formals', 'return_type', 'expr']}),
-  'feature_list': make_list_node(),
+  'feature_list': handle_list,
   'optional_feature_list': lambda r, p: p[1]
 }
 
@@ -169,23 +184,24 @@ def ast_to_str(ast_node, indent=0):
       values = ast_node.values
       return '%s%s%s %s\n' % (recurse(values[0]), pad, values[1], values[2])
     else:
+      pad = ' ' * indent
       def output_indent(elm):
-        return '%s%s\n' % (' ' * indent, elm)
+        return '%s%s\n' % (pad, elm)
 
       out = ''
-      # Clean this up.
-      values = ast_node.values
-      if ast_node.lineno:
-        out += output_indent('#%d' % ast_node.lineno)
-        values = values[1:]
-
-      for elm in values:
-        if type(elm) == ASTNode:
-          out += recurse(elm)
-        elif type(elm) in [list, tuple]:
-          out += ''.join(recurse(e) for e in elm)
+      for kind, val in ast_node.items:
+        if kind in ['str_const', 'filename']:
+          out += output_indent('\"%s\"' % val)
+        elif kind == 'lineno':
+          out += output_indent('#%d' % val)
+        elif kind == 'actuals':
+          out += output_indent('(\n%s%s)' % (recurse(val), pad))
+        elif type(val) == ASTNode:
+          out += recurse(val)
+        elif type(val) in [list, tuple]:
+          out += ''.join(recurse(v) for v in val)
         else:
-          out += output_indent(elm)
+          out += output_indent(val)
 
     return out
 
