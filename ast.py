@@ -62,6 +62,11 @@ simple_action_dict = {
 #  be able to add type info
 #
 #
+# I may need to start having classes for everything, so I can
+# answer more complex queries like:
+#  what is my type?
+#  see if there is a way to make the creation of classes easier?
+#
 #
 
 
@@ -129,25 +134,25 @@ tuple_action_dict = {
   'program': make_ast_node({'_program': ['LINENO', 'PROGRAM', 'class_list']}),
   'class_list': handle_list,
   'class': make_ast_node({'_class': ['LINENO', 'CLASS', 'name', 'parent', 'filename', 'LPAREN', 'features', 'RPAREN']}),
-  'simple_case': make_ast_node({'_branch': ['LINENO', 'BRANCH', 'name', 'type_decl', 'expr']}),
+  'simple_case': make_ast_node({'_branch': ['LINENO', 'BRANCH', 'name', 'type', 'expr']}),
   'case_list': handle_list,
   'expr_list': handle_list,
   'actuals': handle_paren_list,
   'expr_aux': make_ast_node({
       '_no_expr': ['LINENO', 'NO_EXPR'],
-      '_object': ['LINENO', 'OBJECT', 'ID'],
+      '_object': ['LINENO', 'OBJECT', 'name'],
       '_bool': ['LINENO', 'BOOL', 'INT_CONST'],
       '_string': ['LINENO', 'STRING', 'STR_CONST'],
       '_int': ['LINENO', 'INT', 'INT_CONST'],
       '_comp': ['LINENO', 'COMP', 'expr'],
-      '_leq': ['LINENO', 'LEQ', 'expr1', 'expr2'],
+      '_leq': ['LINENO', 'op', 'expr1', 'expr2'],
       '_eq': ['LINENO', 'EQ', 'expr1', 'expr2'],
-      '_lt': ['LINENO', 'LT', 'expr1', 'expr2'],
+      '_lt': ['LINENO', 'op', 'expr1', 'expr2'],
       '_neg': ['LINENO', 'NEG', 'expr'],
-      '_divide': ['LINENO', 'DIVIDE', 'expr1', 'expr2'],
-      '_mul': ['LINENO', 'MUL', 'expr1', 'expr2'],
-      '_sub': ['LINENO', 'SUB', 'expr1', 'expr2'],
-      '_plus': ['LINENO', 'PLUS', 'expr1', 'expr2'],
+      '_divide': ['LINENO', 'op', 'expr1', 'expr2'],
+      '_mul': ['LINENO', 'op', 'expr1', 'expr2'],
+      '_sub': ['LINENO', 'op', 'expr1', 'expr2'],
+      '_plus': ['LINENO', 'op', 'expr1', 'expr2'],
       '_isvoid': ['LINENO', 'ISVOID', 'expr'],
       '_new': ['LINENO', 'NEW', 'ID'],
       '_typcase': ['LINENO', 'TYPCASE', 'expr', 'case_list'],
@@ -164,8 +169,8 @@ tuple_action_dict = {
   'formal_list': handle_list,
   # Combine with optional_feature_list if needed
   'formals': lambda r, p: p[1] if len(p) == 2 else [],
-  'feature': make_ast_node({'_attr': ['LINENO', 'ATTR', 'name', 'type_decl', 'init'],
-                            '_method': ['LINENO', 'METHOD', 'name', 'formals', 'return_type', 'expr']}),
+  'feature': make_ast_node({'_attr': ['LINENO', 'ATTR', 'name', 'type', 'init'],
+                            '_method': ['LINENO', 'METHOD', 'name', 'formals', 'type', 'expr']}),
   'feature_list': handle_list,
   'optional_feature_list': lambda r, p: p[1] if len(p) == 2 else []
 }
